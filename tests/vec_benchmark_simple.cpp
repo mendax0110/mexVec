@@ -8,7 +8,7 @@
 
 static void BM_MexVec_PushBack(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         mex::Vec<int> v;
         for (int i = 0; i < state.range(0); ++i)
@@ -25,7 +25,7 @@ BENCHMARK(BM_MexVec_PushBack)->Range(8, 8<<10);
 
 static void BM_StdVector_PushBack(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         std::vector<int> v;
         for (int i = 0; i < state.range(0); ++i)
@@ -42,7 +42,7 @@ BENCHMARK(BM_StdVector_PushBack)->Range(8, 8<<10);
 
 static void BM_MexVec_PushBack_Reserved(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         mex::Vec<int> v;
         v.reserve(state.range(0));
@@ -60,7 +60,7 @@ BENCHMARK(BM_MexVec_PushBack_Reserved)->Range(64, 8<<10);
 
 static void BM_StdVector_PushBack_Reserved(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         std::vector<int> v;
         v.reserve(state.range(0));
@@ -102,7 +102,7 @@ static void BM_StdVector_RandomAccess(benchmark::State& state)
     std::mt19937 rng(42);
     std::uniform_int_distribution<size_t> dist(0, v.size() - 1);
 
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         size_t idx = dist(rng);
         benchmark::DoNotOptimize(v[idx]);
@@ -117,12 +117,12 @@ static void BM_MexVec_SequentialAccess(benchmark::State& state)
     mex::Vec<int> v(state.range(0));
     std::iota(v.begin(), v.end(), 0);
 
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         long long sum = 0;
-        for (size_t i = 0; i < v.size(); ++i)
+        for (int i : v)
         {
-            sum += v[i];
+            sum += i;
         }
         benchmark::DoNotOptimize(sum);
     }
@@ -136,12 +136,12 @@ static void BM_StdVector_SequentialAccess(benchmark::State& state)
     std::vector<int> v(state.range(0));
     std::iota(v.begin(), v.end(), 0);
 
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         long long sum = 0;
-        for (size_t i = 0; i < v.size(); ++i)
+        for (int i : v)
         {
-            sum += v[i];
+            sum += i;
         }
         benchmark::DoNotOptimize(sum);
     }
@@ -152,7 +152,7 @@ BENCHMARK(BM_StdVector_SequentialAccess)->Range(64, 16<<10);
 
 static void BM_MexVec_InsertMiddle(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         state.PauseTiming();
         mex::Vec<int> v;
@@ -170,7 +170,7 @@ BENCHMARK(BM_MexVec_InsertMiddle)->Range(8, 1<<10);
 
 static void BM_StdVector_InsertMiddle(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         state.PauseTiming();
         std::vector<int> v;
@@ -188,7 +188,7 @@ BENCHMARK(BM_StdVector_InsertMiddle)->Range(8, 1<<10);
 
 static void BM_MexVec_EraseMiddle(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         state.PauseTiming();
         mex::Vec<int> v;
@@ -206,7 +206,7 @@ BENCHMARK(BM_MexVec_EraseMiddle)->Range(8, 1<<10);
 
 static void BM_StdVector_EraseMiddle(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         state.PauseTiming();
         std::vector<int> v;
@@ -227,7 +227,7 @@ static void BM_MexVec_Copy(benchmark::State& state)
     mex::Vec<int> source(state.range(0));
     std::iota(source.begin(), source.end(), 0);
 
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         mex::Vec<int> copy(source);
         benchmark::DoNotOptimize(copy.data());
@@ -243,7 +243,7 @@ static void BM_StdVector_Copy(benchmark::State& state)
     std::vector<int> source(state.range(0));
     std::iota(source.begin(), source.end(), 0);
 
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         std::vector<int> copy(source);
         benchmark::DoNotOptimize(copy.data());
@@ -256,7 +256,7 @@ BENCHMARK(BM_StdVector_Copy)->Range(8, 8<<10);
 
 static void BM_MexVec_SmallObjects(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         mex::Vec<int> v;
         for (int i = 0; i < 8; ++i)  // Within SBO
@@ -273,7 +273,7 @@ BENCHMARK(BM_MexVec_SmallObjects);
 
 static void BM_StdVector_SmallObjects(benchmark::State& state)
 {
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         std::vector<int> v;
         for (int i = 0; i < 8; ++i)
@@ -296,7 +296,7 @@ static void BM_MexVec_StringPushBack(benchmark::State& state)
         strings.push_back("String_" + std::to_string(i));
     }
 
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         mex::Vec<std::string> v;
         for (int i = 0; i < state.range(0); ++i)
@@ -317,7 +317,7 @@ static void BM_StdVector_StringPushBack(benchmark::State& state)
         strings.push_back("String_" + std::to_string(i));
     }
 
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         std::vector<std::string> v;
         for (int i = 0; i < state.range(0); ++i)
@@ -356,7 +356,7 @@ static void BM_StdVector_Sort(benchmark::State& state)
     std::mt19937 rng(42);
     std::uniform_int_distribution<int> dist(0, 10000);
 
-    for (auto _ : state)
+    for ([[maybe_unused]] auto _ : state)
     {
         state.PauseTiming();
         std::vector<int> v(state.range(0));

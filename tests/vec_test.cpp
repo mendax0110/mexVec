@@ -1,5 +1,6 @@
 #include "../include/Vec.hpp"
 #include <gtest/gtest.h>
+#include <ranges>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -27,9 +28,9 @@ TEST_F(VecTest, CountConstructor)
     EXPECT_EQ(v.size(), 10);
     EXPECT_GE(v.capacity(), 10);
 
-    for (size_t i = 0; i < v.size(); ++i)
+    for (int i : v)
     {
-        EXPECT_EQ(v[i], 0);
+        EXPECT_EQ(i, 0);
     }
 }
 
@@ -38,9 +39,9 @@ TEST_F(VecTest, CountValueConstructor)
     mex::Vec<int> v(5, 42);
     EXPECT_EQ(v.size(), 5);
 
-    for (size_t i = 0; i < v.size(); ++i)
+    for (int i : v)
     {
-        EXPECT_EQ(v[i], 42);
+        EXPECT_EQ(i, 42);
     }
 }
 
@@ -146,9 +147,9 @@ TEST_F(VecTest, AssignCount)
     v.assign(5, 42);
 
     EXPECT_EQ(v.size(), 5);
-    for (size_t i = 0; i < v.size(); ++i)
+    for (int i : v)
     {
-        EXPECT_EQ(v[i], 42);
+        EXPECT_EQ(i, 42);
     }
 }
 
@@ -222,9 +223,9 @@ TEST_F(VecTest, Iterators)
     mex::Vec<int> v = {1, 2, 3, 4, 5};
 
     int sum = 0;
-    for (auto it = v.begin(); it != v.end(); ++it)
+    for (int & it : v)
     {
-        sum += *it;
+        sum += it;
     }
     EXPECT_EQ(sum, 15);
 
@@ -241,9 +242,9 @@ TEST_F(VecTest, ReverseIterators)
     mex::Vec<int> v = {1, 2, 3, 4, 5};
 
     std::vector<int> reversed;
-    for (auto it = v.rbegin(); it != v.rend(); ++it)
+    for (int & it : std::ranges::reverse_view(v))
     {
-        reversed.push_back(*it);
+        reversed.push_back(it);
     }
 
     EXPECT_EQ(reversed.size(), 5);
@@ -256,9 +257,9 @@ TEST_F(VecTest, ConstIterators)
     const mex::Vec<int> v = {1, 2, 3};
 
     int sum = 0;
-    for (auto it = v.cbegin(); it != v.cend(); ++it)
+    for (int it : v)
     {
-        sum += *it;
+        sum += it;
     }
     EXPECT_EQ(sum, 6);
 }
@@ -756,9 +757,9 @@ TEST(VecConst, ConstIterators)
     const mex::Vec<int> v = {1, 2, 3, 4, 5};
 
     int sum = 0;
-    for (auto it = v.begin(); it != v.end(); ++it)
+    for (int it : v)
     {
-        sum += *it;
+        sum += it;
     }
     EXPECT_EQ(sum, 15);
 
@@ -772,9 +773,9 @@ TEST(VecConst, ConstReverseIterators)
     const mex::Vec<int> v = {1, 2, 3};
 
     std::vector<int> reversed;
-    for (auto it = v.rbegin(); it != v.rend(); ++it)
+    for (int it : std::ranges::reverse_view(v))
     {
-        reversed.push_back(*it);
+        reversed.push_back(it);
     }
 
     EXPECT_EQ(reversed[0], 3);
@@ -936,7 +937,7 @@ struct NonTrivial
         ++constructions;
     }
 
-    NonTrivial(int val) : ptr(std::make_unique<int>(val))
+    explicit NonTrivial(int val) : ptr(std::make_unique<int>(val))
     {
         ++constructions;
     }
@@ -954,7 +955,7 @@ struct NonTrivial
         ++destructions;
     }
 
-    NonTrivial& operator=(const NonTrivial&) = default;
+    NonTrivial& operator=(const NonTrivial&) = delete;
     NonTrivial& operator=(NonTrivial&&) noexcept = default;
 
     static void reset()
@@ -1184,6 +1185,68 @@ TEST(VecSBO, MoveSmallToSmall)
     EXPECT_TRUE(v2.is_small());
     EXPECT_EQ(v2.size(), 3);
     EXPECT_TRUE(v1.empty());
+}
+
+TEST(VecComplexTypes, VectorTypes)
+{
+    mex::Vec<std::vector<int>> v;
+
+    v.emplace_back(std::vector<int>{1, 2, 3});
+    v.emplace_back(std::vector<int>{4, 5});
+
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0].size(), 3);
+    EXPECT_EQ(v[1].size(), 2);
+    EXPECT_EQ(v[0][0], 1);
+    EXPECT_EQ(v[1][1], 5);
+}
+
+TEST(VecComplexTypes, VectorOfVecs)
+{
+    mex::Vec<mex::Vec<int>> v;
+
+    v.emplace_back(mex::Vec<int>{1, 2, 3});
+    v.emplace_back(mex::Vec<int>{4, 5});
+
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0].size(), 3);
+    EXPECT_EQ(v[1].size(), 2);
+    EXPECT_EQ(v[0][0], 1);
+    EXPECT_EQ(v[1][1], 5);
+}
+
+TEST(VecComplexTypes, VectorOfStrings)
+{
+    class ComplexClass
+    {
+    public:
+        std::string name;
+        int value;
+
+        ComplexClass(std::string n, int v) : name(std::move(n)), value(v) {}
+
+        bool operator==(const ComplexClass& other) const
+        {
+            return name == other.name && value == other.value;
+        }
+
+        bool operator<(const ComplexClass& other) const
+        {
+            return std::tie(name, value) < std::tie(other.name, other.value);
+        }
+
+        auto operator<=>(const ComplexClass& other) const = default;
+    };
+
+    mex::Vec<ComplexClass> v;
+    v.emplace_back("Alice", 30);
+    v.emplace_back("Bob", 25);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[0].name, "Alice");
+    EXPECT_EQ(v[0].value, 30);
+
+    EXPECT_EQ(v[1].name, "Bob");
+    EXPECT_EQ(v[1].value, 25);
 }
 
 int main(int argc, char** argv)
